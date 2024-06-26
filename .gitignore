@@ -1,0 +1,34 @@
+__pycache__/
+.vscode
+# .gitignore
+.mypy_cache/
+*.py[cod]
+*$py.class
+
+.gem/
+.vagrant/
+.vagrant_backup/
+emulation/build/
+*.so
+.DS_Store
+
+emulator_yoho/measurements/testcase_1/*
+emulator_yoho/measurements/testcase_2/*
+emulator_yoho/measurements/testcase_3/*
+emulator_yoho/measurements/cloud_server/*/*
+emulator_yoho/measurements/log/*
+# emulator_yoho/measurements/plot/*
+# saxs.pkl
+# saxsNew.pkl
+simplecoinstd.py
+simplecoinlite.py
+
+# emulator/measurement/*/*/*.csv
+
+# using git lfs save those file.
+# emulator/MIMII/saxs.pkl
+# emulator/MIMII/saxsNew.pkl
+emulator/MIMII/data/*
+
+autocmd.py
+temp.autocmdcfg

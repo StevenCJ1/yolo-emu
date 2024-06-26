@@ -1,0 +1,4 @@
+2022-06-23 20:41:57,376 test_logging.py <module>[line:18]DEBUG - log_file.debug
+2022-06-23 20:41:57,376 test_logging.py <module>[line:19]INFO - log_file-info
+2022-06-23 20:43:41,439 test_logging.py <module>[line:18]DEBUG - log_file.debug
+2022-06-23 20:43:41,439 test_logging.py <module>[line:19]INFO - log_file-info
