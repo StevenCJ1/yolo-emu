@@ -318,7 +318,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--epochs",
         type=int,
-        default=30,
+        default=10,
         help="The number of validation epochs. default = 5"
     )
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--test_id",
         type=int,
-        default=1,
+        default=3,
         choices=[0, 1, 2, 3],  # see the setting on nnetworkutils.py
         help="ID of the test case. default = 1"
     )
@@ -335,8 +335,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--chunk_gap",
         type=float,
-        default=0.002,
-        help="dalay for send each chunk [s]. default = 0.001"
+        default=0.01,
+        help="dalay for send each chunk [s]. default = 0.001"   # [0.001-0.01]
     )
 
     # n_spliter_client = 8
@@ -454,6 +454,6 @@ if __name__ == "__main__":
         log_file(ifce_name).debug(info4.center(60, "*"))
         log_file(ifce_name).debug(info5.center(60, "*"))
         log_file(ifce_name).debug("".center(60, "*"))
-        time.sleep(3)
+        time.sleep(8)
         run_one_epochs()
         epochs_index += 1

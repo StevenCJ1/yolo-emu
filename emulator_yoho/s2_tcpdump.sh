@@ -1,0 +1,1 @@
+sudo tcpdump -i s2-eth1 udp -vv -w measurements/testcaseTP_3/s2-s1.pcap & sudo tcpdump -i s2-server udp -vv -w measurements/testcaseTP_3/s2-server.pcap

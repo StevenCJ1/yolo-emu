@@ -28,14 +28,14 @@ def find_target_packet_times(capture):
             if length_502_found:
                 target_packet_times.append(packet.sniff_time)
                 length_502_found = False
-
+            '''
             if packet_length > 502:
                 packet_size = packet_size + packet_length
 
             if packet_length == 73:
                 packet_size_list.append(packet_size)
                 packet_size = 0
-
+            '''
         except AttributeError:
             continue
 
@@ -45,6 +45,7 @@ def find_target_packet_times(capture):
 if '__main__' == __name__:
 
     test_id = 3
+    chunk_gap = 0.01
     folder_path = f'testcaseTP_{test_id}/'  # 替换为你的文件夹路径
     filenames = get_all_filenames(folder_path)
     #print(filenames)
@@ -82,8 +83,8 @@ if '__main__' == __name__:
             cap.close()
             # 将时间戳列表转换为DataFrame
             time_temp_df = pd.DataFrame(target_packet_times, columns=[f"t{timepoint}"])
-            data_temp_df = pd.DataFrame(packet_size_list, columns=[f"{key}"])
-            data_df_list.append(data_temp_df)
+            #data_temp_df = pd.DataFrame(packet_size_list, columns=[f"{key}"])
+            #data_df_list.append(data_temp_df)
         else:
 
             time_temp_df = pd.read_csv(file_path)
@@ -113,7 +114,7 @@ if '__main__' == __name__:
 
 
     combined_df = pd.concat(time_df_list, axis=1)
-    data_df = pd.concat(data_df_list, axis = 1)
+    #data_df = pd.concat(data_df_list, axis = 1)
     # 将第二列移到最后一列
     cols = list(combined_df.columns)
     cols.append(cols.pop(1))  # 将第二列移动到最后
@@ -124,12 +125,14 @@ if '__main__' == __name__:
 
     time_diff_data = combined_df.diff(axis=1).drop(columns=['t1'])
     time_diff_data = time_diff_data.apply(lambda x: x.dt.total_seconds())
-
+    time_diff_data.loc[:, 'Sum'] = time_diff_data.iloc[:].sum(axis=1)
 
     # 保存到CSV文件中
-    time_file_path = f'testcaseTP_{test_id}/time_diff.csv'
-    data_file_path = f'testcaseTP_{test_id}/data_size.csv'
+    time_file_path = f'test_{test_id}/time_diff_{chunk_gap}.csv'
+    #data_file_path = f'testcaseTP_{test_id}/data_size.csv'
     time_diff_data.to_csv(time_file_path, index=False)
-    data_df.to_csv(data_file_path, index=False)
+    #data_df.to_csv(data_file_path, index=False)
+    for key, file_path in new_files.items():
+        os.remove(file_path)
 
 
