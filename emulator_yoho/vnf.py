@@ -10,6 +10,9 @@ import json
 import csv
 import os
 import torch
+import subprocess
+import re
+from pathlib import Path
 from torch.serialization import load
 from utils.combiner import Combiner
 from utils.yohobuffer import YOHOBuffer
@@ -28,17 +31,7 @@ ifce_name, node_ip = simpleudp.get_local_ifce_ip('10.0.')
 
 # Model
 log_cmd().info("load model...")
-model = []
-for i in range(len(MODEL_PATH_LIST)):
-    model.append(load_model(MODEL_PATH_LIST[i]))
-part_3_conv = Part_Conv_3(model[2], mode="inference")
-part_3_fc = Part_FC_3(model[2], mode="inference")
-model[2] = part_3_conv
-model.append(part_3_fc)
-model_length = [1, 64, 160, 1280]
 
-model_mlp = load_model_mlp()
-model_length_mlp = [3072, 256, 64]
 
 # Init
 metadata = {}
@@ -103,8 +96,8 @@ def main(simplecoin: SimpleCOIN.IPC, af_packet: bytes):
             num_combiner += 1
             if num == 0:
                 simplecoin.forward(af_packet)
-            else:
-                simplecoin.submit_func(pid=0, id = 'combiner_data', args = (chunk,))
+            #else:
+                #simplecoin.submit_func(pid=0, id = 'combiner_data', args = (chunk,))
             
         elif header == HEADER_COMBINER_FINISH:
             if num_combiner == 0: # first chunk
@@ -118,7 +111,7 @@ def main(simplecoin: SimpleCOIN.IPC, af_packet: bytes):
                 simplecoin.submit_func(pid=0, id= 'compute_forward', args=(chunk, num_combiner, cache_time))
             num_combiner = 0
             cache_time = time.time()
-
+        
 @app.func('clear_cache')
 def clear_cache(simplecoin: SimpleCOIN.IPC):
     global metadata, data_list, num, epochs, epochs_index, n_split, n_combiner, sc_list, test_id, mode
@@ -201,6 +194,72 @@ def combiner_data(simplecoin:SimpleCOIN.IPC, chunk):
     index = int(chunk[1])
     data_list[index].put(chunk[2:])
 
+
+@app.func('compute_forward')
+def compute_forward(simplecoin: SimpleCOIN.IPC, chunk, used_combiner_chunk, cache_time):
+    global data_list, num, epochs, epochs_index, n_split, n_combiner, sc_list, test_id
+    global chunk_gap, ratio_last, finished_id, metadata, mode
+    global combiner_index, combiner_list, combiner_all, model_length
+    #------------------------------------------------------------------------
+    # time point 3 in vnf, packet arrival in vnf. We assume header resolve in switch
+    print("recev the message")
+    tp3_arrivalVNF = time.time() 
+
+    weights_path = 'models_trained/best.pt'
+    data_path = 'dataset/fruits/data.yaml'
+    command = [
+        'python3.8', 'val.py',
+        '--weights', weights_path,
+        '--data', data_path,
+        '--save-txt',
+    ]
+
+    result = subprocess.run(command, capture_output=True, text=True)
+    tp4_sendtoSwitch = time.time()  # time point 4 in vnf which don't FC
+
+
+    #------------------------------------------------------------------------
+    # Regular expression to find the path
+    match = re.search(r"(\d+) labels saved to (\S+)", result.stderr)
+    # 使用正则表达式提取时间数据
+    pre_process_time = float(re.search(r'(\d+\.\d+)ms pre-process', result.stderr).group(1))
+    inference_time = float(re.search(r'(\d+\.\d+)ms inference', result.stderr).group(1))
+    nms_time = float(re.search(r'(\d+\.\d+)ms NMS', result.stderr).group(1))
+
+    # 计算单张图像的总处理时间
+    process_time_per_image = pre_process_time + inference_time + nms_time
+    process_time = process_time_per_image * 6
+
+    saved_path = match.group(2)        # 'runs/val/exp8/labels'
+    txt_outputs = []
+    labels_dir = Path(saved_path)
+    for label_file in labels_dir.glob('*.txt'):
+        with open(label_file, 'rb') as file:
+            txt_outputs.append(file.read())
+
+    send_list = []
+    send_list = chunk_handler.get_serialize_imagefile(
+                HEADER_DATA, txt_outputs)
+
+    #------------------------------------------------------------------------
+    # send to next
+    for j in range(len(send_list)):
+
+        if j == 0:
+            tp4_sendtoSwitch = time.time()  # time point 4 in vnf which don't FC
+        time.sleep(chunk_gap)
+        simpleudp.sendto(send_list[j], serverAddressPort)
+        packet = simpleudp.parse_af_packet(send_list[j])
+        return_header = int(packet['Chunk'][0])
+        print(return_header)
+    print("Finish process sent to next")
+    #------------------------------------------------------------------------
+    log_csv_tp(ifce_name,test_id, tp3_arrivalVNF, tp4_sendtoSwitch, process_time)
+
+
+
+
+'''
 @app.func('compute_forward')
 def compute_forward(simplecoin: SimpleCOIN.IPC, chunk, used_combiner_chunk, cache_time):
     global data_list, num, epochs, epochs_index, n_split, n_combiner, sc_list, test_id
@@ -336,7 +395,7 @@ def compute_forward(simplecoin: SimpleCOIN.IPC, chunk, used_combiner_chunk, cach
     log_csv(ifce_name, mode, test_id, chunk_gap, epochs_index, epochs, n_split * ratio_last, n_combiner, used_chunk_num,
                     used_data_len, used_data_shape, cache_time, process_time)
     log_csv_tp(ifce_name,test_id, tp3_arrivalVNF, tp4_sendtoSwitch)
-
+'''
 @app.func('test')
 def test(simplecoin: SimpleCOIN.IPC):
     global model

@@ -21,7 +21,7 @@ def find_target_packet_times(capture):
         try:
             packet_length = int(packet.length)
 
-            if packet_length == 502:
+            if packet_length == 438:
                 length_502_found = True
                 continue
 
@@ -44,8 +44,8 @@ def find_target_packet_times(capture):
 
 if '__main__' == __name__:
 
-    test_id = 3
-    chunk_gap = 0.01
+    test_id = 5
+    chunk_gap = 0.02
     folder_path = f'testcaseTP_{test_id}/'  # 替换为你的文件夹路径
     filenames = get_all_filenames(folder_path)
     #print(filenames)
@@ -88,25 +88,27 @@ if '__main__' == __name__:
         else:
 
             time_temp_df = pd.read_csv(file_path)
-            # server time point read
-            if key in ["server_s2"]:
-                time_temp_df = time_temp_df.iloc[:, [0]]
-                time_temp_df['t0'] = pd.to_datetime(time_temp_df['t0'], unit='s',utc=True)
-                time_temp_df['t0'] = time_temp_df['t0'].dt.tz_convert('Europe/Berlin')
-                time_temp_df.columns = [f"t{timepoint}"]
+            # client time point read
 
-            # client and vnf time point read
+            if key in ["client_s0"]:
+                time_temp_df = time_temp_df.iloc[:, :]
+                time_temp_df['t0'] = pd.to_datetime(time_temp_df['t0'], unit='s',utc=True)
+                time_temp_df['t1'] = pd.to_datetime(time_temp_df['t1'], unit='s',utc=True)
+                time_temp_df['t0'] = time_temp_df['t0'].dt.tz_convert('Europe/Berlin')
+                time_temp_df['t1'] = time_temp_df['t1'].dt.tz_convert('Europe/Berlin')
+                time_temp_df.columns = [f"t{timepoint}", "t15"]
+
+            # server and vnf time point read
             else:
                 time_temp_df = time_temp_df.iloc[:, :]
                 time_temp_df['t0'] = pd.to_datetime(time_temp_df['t0'], unit='s',utc=True)
                 time_temp_df['t1'] = pd.to_datetime(time_temp_df['t1'], unit='s',utc=True)
                 time_temp_df['t0'] = time_temp_df['t0'].dt.tz_convert('Europe/Berlin')
                 time_temp_df['t1'] = time_temp_df['t1'].dt.tz_convert('Europe/Berlin')
-                if key in ["client_s0"]:
-                    time_temp_df.columns = [f"t{timepoint}", "t15"]
-                else:
-                    time_temp_df.columns = [f"t{timepoint}",f"t{timepoint + 1}"]
-                    timepoint = timepoint + 1
+                process_time = time_temp_df['t2']
+                time_temp_df = time_temp_df.drop(time_temp_df.columns[-1], axis=1)
+                time_temp_df.columns = [f"t{timepoint}",f"t{timepoint + 1}"]
+                timepoint = timepoint + 1
 
         timepoint = timepoint + 1
 
@@ -124,6 +126,9 @@ if '__main__' == __name__:
         combined_df[col] = pd.to_datetime(combined_df[col], unit='s').dt.tz_localize(None)
 
     time_diff_data = combined_df.diff(axis=1).drop(columns=['t1'])
+    max_column = time_diff_data.max().idxmax()
+    time_diff_data[max_column] = pd.to_timedelta(process_time, unit='ms')
+
     time_diff_data = time_diff_data.apply(lambda x: x.dt.total_seconds())
     time_diff_data.loc[:, 'Sum'] = time_diff_data.iloc[:].sum(axis=1)
 

@@ -48,19 +48,26 @@ def log_file_tp(ifce_name: str):  # log file for each time points
     return log_file
 
 
-def log_csv_tp(ifce_name, test_id: int, t0:float,t1:float=0, is_update:bool=False):
+def log_csv_tp(ifce_name, test_id: int, t0:float,t1:float=0, t2:float=0,is_update:bool=False):
     file_name = "./measurements/testcaseTP_" + \
         str(test_id) + "/tp_" + ifce_name + ".csv"
 
     if is_update:
         delLastLine(file_name)
+    if t2 == 0:
+        with open(file_name, "a+") as csvfile:
+            writer = csv.writer(csvfile, delimiter=",")
 
-    with open(file_name, "a+") as csvfile:
-        writer = csv.writer(csvfile, delimiter=",")
+            if os.path.getsize(file_name) == 0:
+                writer.writerow(["t0", "t1"])
+            writer.writerow([t0,t1])
+    else:
+        with open(file_name, "a+") as csvfile:
+            writer = csv.writer(csvfile, delimiter=",")
 
-        if os.path.getsize(file_name) == 0:
-            writer.writerow(["t0", "t1"])
-        writer.writerow([t0,t1])
+            if os.path.getsize(file_name) == 0:
+                writer.writerow(["t0", "t1", "t2"])
+            writer.writerow([t0,t1,t2])
 
 
 

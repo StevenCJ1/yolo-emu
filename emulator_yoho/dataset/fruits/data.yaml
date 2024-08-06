@@ -1,0 +1,13 @@
+train: ./dataset/fruits/train/images
+val: ./dataset/fruits/valid/images
+test: ./dataset/fruits/test/images
+
+nc: 6
+names: ['apple', 'kiwi', 'lemon', 'orange', 'pomegranate', 'tomato']
+
+roboflow:
+  workspace: arya-zgyyu
+  project: project2-epni7
+  version: 6
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/arya-zgyyu/project2-epni7/dataset/6

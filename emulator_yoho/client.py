@@ -89,25 +89,17 @@ def set_args(args):
     n_combiner_server = args.n_combiner_server
 
 
-# model
-log_cmd().info("load model...")
-model = []
-for i in range(len(MODEL_PATH_LIST)):
-    model.append(load_model(MODEL_PATH_LIST[i]))
-part_3_conv = Part_Conv_3(model[2], mode="inference")
-part_3_fc = Part_FC_3(model[2], mode="inference")
-model[2] = part_3_conv
-model.append(part_3_fc)
 
-
-model_mlp = load_model_mlp()
 
 
 # genarate data
 log_cmd().info("gearate data ...")
-data = get_network_data_tensors()            # .numpy() # torch.from_numpy(c)
-data_shape = data.shape
-length = data_shape[2]
+#data = get_network_data_tensors()            # .numpy() # torch.from_numpy(c)
+
+data = get_yolo_data_tensors()
+length = len(data)
+#data_shape = data.shape
+#length = data_shape[2]
 
 data_mlp = get_mlp_data_tensors()
 data_shape_mlp = data_mlp.shape
@@ -131,7 +123,8 @@ LATENCY = {"processing_time": 0.0, "serialize_time": 0.0, "packet_send_time": 0.
 latency = {}
 latency.update(LATENCY)
 
-
+# Simple coin
+app = SimpleCOIN(ifce_name=ifce_name, n_func_process=1, lightweight_mode=True)
 # run 1 epoch
 def run():
     global metadata, model, mode, data, data_shape
@@ -210,7 +203,7 @@ def run():
     latency["processing_time"] += time.time() - t_start
 
     # combine
-    sc.combine_split_list()
+    #sc.combine_split_list()
 
     # check if all finished
     t_start = time.time()
@@ -238,11 +231,22 @@ def run():
             simpleudp.sendto(chunk, serverAddressPort)
         log_file(ifce_name).debug(f'send HEADER_FINISH flag to server!')
     else:
+        send_list = []
+        send_list = chunk_handler.get_serialize_imagefile(
+                HEADER_COMBINER_DATA, data)
+        for i, chunk in enumerate(send_list):
+            time.sleep(chunk_gap)
+            if i == 0:
+                tp_clientsentPacket = time.time()
+            simpleudp.sendto(chunk, serverAddressPort)
+        log_cmd().info(f"Finish: send images to server! Used time is {time.time() - tp_clientsentPacket}")
+        '''
+        # yolo send data to the vnf, need to add head to each chuncks.
         log_cmd().info(
             f"finish: {metadata['finished_id']} / 3, send combiner_list to server!")
         send_list = [None] * len(sc.combiner_list)
         for i in range(len(sc.combiner_list)):
-            send_list[i] = chunk_handler.get_serialize_torcharray(
+            send_list[i] = yolo_chunk_handle.get_serialize_torcharray(
                 HEADER_COMBINER_DATA, i, sc.combiner_list[i])
             log_file(ifce_name).debug(
                 f'[index = {i}, send {len(send_list[i])} to server!')
@@ -254,18 +258,28 @@ def run():
                 simpleudp.sendto(send_list[i][j], serverAddressPort)
         log_file(ifce_name).debug(
             f'[index = {i}, send HEADER_COMBINER_FINISH flag to server!')
+        '''
     latency['serialize_time'] += time.time() - t_start
 
     # wait ack from server
     log_cmd().info("*** wait ack from server !")
-    print("*** transmisson_time:",
-          simpleudp.recvfrom(1000)[0], time.time() - t_start_service)
-    latency["transmission_time"] = time.time() - t_start_service
 
-    print("*** service_time:",
-          simpleudp.recvfrom(1000)[0], time.time() - t_start_service)
-    latency["service_time"] = time.time() - t_start_service
-    tp_clientGetPacket = time.time()
+    count = 0
+    return_header = 0
+    while True:
+        dst_addr, pred_data = simpleudp.recvfrom(1000)
+        if test_id == 2:
+            count = count + 1
+            if count == 12:
+                return_header = HEADER_FINISH
+        else:
+            packet = simpleudp.parse_af_packet(dst_addr)
+            return_header = int(packet['Chunk'][0])
+
+        if return_header == HEADER_FINISH:
+            break
+    tp_clientGetPacket = time.time()    
+    log_cmd().info("*** get the result from server !")
     log_csv_tp(ifce_name,test_id,tp_clientsentPacket, tp_clientGetPacket)
 
 def run_one_epochs():
@@ -322,12 +336,23 @@ if __name__ == "__main__":
         help="The number of validation epochs. default = 5"
     )
 
+    '''
+    compute_table = np.array([
+        [3, 0, 0, 0, 0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 0, 0, 3],
+        [0, 3, 0, 0, 0],
+        [0, 0, 3, 0, 0],
+        [0, 0, 0, 3, 0]
+    ])
+    '''
+
     # --testid = 1
     parser.add_argument(
         "--test_id",
         type=int,
-        default=3,
-        choices=[0, 1, 2, 3],  # see the setting on nnetworkutils.py
+        default=5,
+        choices=[0, 1, 2, 3, 4, 5],  # see the setting on nnetworkutils.py
         help="ID of the test case. default = 1"
     )
 
@@ -335,7 +360,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--chunk_gap",
         type=float,
-        default=0.01,
+        default=0.002,
         help="dalay for send each chunk [s]. default = 0.001"   # [0.001-0.01]
     )
 
@@ -454,6 +479,6 @@ if __name__ == "__main__":
         log_file(ifce_name).debug(info4.center(60, "*"))
         log_file(ifce_name).debug(info5.center(60, "*"))
         log_file(ifce_name).debug("".center(60, "*"))
-        time.sleep(8)
+        time.sleep(20)
         run_one_epochs()
         epochs_index += 1
