@@ -98,12 +98,7 @@ log_cmd().info("gearate data ...")
 
 data = get_yolo_data_tensors()
 length = len(data)
-#data_shape = data.shape
-#length = data_shape[2]
 
-data_mlp = get_mlp_data_tensors()
-data_shape_mlp = data_mlp.shape
-length_mlp = data_shape_mlp[0]
 
 # others
 epochs_index = 1

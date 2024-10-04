@@ -73,13 +73,13 @@ In the topology, client, vnf and server are all docker containers loaded by comn
 For our yolo-emu, the main tasks are driven by these three python3 scripts.
 ```bash
     # on the server
-    python3 ./server.py
+    python3.8 ./server.py
 
     # on the vnf
-    python3 ./vnf.py
+    python3.8 ./vnf.py
 
     # on the client: origial mode
-    python3 ./client.py
+    python3.8 ./client.py
 ```
 To change the parameters of client, you can use the command line
 ```bash

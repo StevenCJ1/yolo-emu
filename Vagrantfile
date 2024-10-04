@@ -10,12 +10,12 @@ CPUS = 4
 # - 2GB RAM SHOULD be sufficient for most examples and applications.
 # - Currently only YOLOv2 object detection application requires 4GB RAM to run smoothly.
 # - Reduce the memory number (in MB) here if you physical machine does not have enough physical memory.
-RAM = 4096
+RAM = 8192
 
 # Bento: Packer templates for building minimal Vagrant baseboxes
 # The bento/ubuntu-XX.XX is a small image of about 500 MB, fast to download
 BOX = "bento/ubuntu-20.04"
-VM_NAME = "ubuntu-20.04-yolo"
+VM_NAME = "ubuntu-20.04-yolo-inc"
 
 # When using libvirt as the provider, use this box, bento boxes do not support libvirt.
 BOX_LIBVIRT = "generic/ubuntu2004"

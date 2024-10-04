@@ -215,6 +215,7 @@ def compute_forward(simplecoin: SimpleCOIN.IPC, chunk, used_combiner_chunk, cach
     ]
 
     result = subprocess.run(command, capture_output=True, text=True)
+    print(result)
     tp4_sendtoSwitch = time.time()  # time point 4 in vnf which don't FC
 
 
