@@ -1,24 +1,22 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Test passing](https://img.shields.io/badge/Tests-passing-brightgreen.svg)
 
-# 1. You Only Hear Once Emulator (Yoho-Emu)
-![](image/logo.png)
+# 1. You Only Look Once In-Network Computing Emulator (YOLO-INC)
+![](image/yolo-inc.png)
 
 # 2. Table of Contents
-- [1. You Only Hear Once Emulator (Yoho-Emu)](#1-you-only-hear-once-emulator-yoho-emu)
+- [1. You Only Look Once In-Network Computing Emulator (YOLO-INC)](#1-you-only-look-once-in-network-computing-emulator-yolo-inc)
 - [2. Table of Contents](#2-table-of-contents)
 - [3. Description](#3-description)
 - [4. Get Started](#4-get-started)
   - [4.1. Installation](#41-installation)
-    - [4.1.1. Option1 : Install in a Vagrant managed VM(Highly Recommanded)](#411-option1--install-in-a-vagrant-managed-vmhighly-recommanded)
-    - [4.1.2. Option2 : Install in Ubuntu](#412-option2--install-in-ubuntu)
-  - [4.2. Run Yoho in the Emulator](#42-run-yoho-in-the-emulator)
+  - [4.2. Run Yolo in the Emulator](#42-run-yolo-in-the-emulator)
     - [4.2.1. Start Emulator](#421-start-emulator)
-    - [4.2.2. Measurements](#422-measurements)
-- [5. Network Detail](#5-network-detail)
+    - [4.2.2. Measurements (TODO)](#422-measurements-todo)
+- [5. Network Detail (TODO)](#5-network-detail-todo)
   - [5.1. Calculation Mode](#51-calculation-mode)
     - [5.1.1. Original Mode](#511-original-mode)
-    - [5.1.2. Spliter & Combiner](#512-spliter--combiner)
+    - [5.1.2. Spliter \& Combiner](#512-spliter--combiner)
   - [5.2. Performance Test](#52-performance-test)
     - [5.2.1. Theoretical calculation](#521-theoretical-calculation)
     - [5.2.2. Acutal Test](#522-acutal-test)
@@ -28,78 +26,33 @@
     - [6.1.2. VScode in Vagrant](#612-vscode-in-vagrant)
 
 # 3. Description
-This application emulate the progressive In-Network Processing in the network, it is **based on the [comnetsemu](https://git.comnets.net/public-repo/comnetsemu)**.
+This application emulate the progressive In-Network Processing in the network, it is **based on the [comnetsemu](https://git.comnets.net/public-repo/comnetsemu)**. In this project we using YOLO v5 as our testing algorithm. YOLO v5 is wired used deep learning algorithms. We want to accelerte YOLO by using In-Networking approch.
 
-Currently, the main branch is the stable version of Yoho V1.0. Other branches are under development for new features.
+Currently, the main branch is the stable version of Yolo V1.0. Other branches are under development for new features.
 
 # 4. Get Started
 
 ## 4.1. Installation
-There are two ways to install yoho-emu: 
+The simpler way is to use the virtual machine we provide, which is based on `vagrant` and will save you some work in environment configuration and can run on any platform.
 
-the simpler way is to use the virtual machine we provide, which is based on `vagrant` and will save you some work in environment configuration and can run on any platform.
-
-the other way is to install it directly in ubuntu system, we tested both versions 18.04 and 20.04 and they both work fine.
-
-### 4.1.1. Option1 : Install in a Vagrant managed VM(Highly Recommanded)
 1. First [Vagrant](https://www.vagrantup.com/docs/installation) and a VM (we recommend [VirtualBox](https://www.virtualbox.org/wiki/Downloads)) need to be installed.
 
-2. Create the `yoho` VM using Vagrant on your host OS.
+2. Create the `yolo` VM using Vagrant on your host OS.
     ```bash
-    cd ./yoho-emu || exit
+    cd ./yolo-emu || exit
 
-    vagrant up yoho
+    vagrant up yolo
     ```
-    Then run `vagrant ssh yoho` to login into the VM. Following steps should be run **inside the VM**.
+    Then run `vagrant ssh yolo` to login into the VM or you can use `ssh -p 2222 vagrant@127.0.0.1` with passwort `vagrant` to login into the VM.
+    
+    Following steps should be run **inside the VM**. The first command is get into the vagrant folder, vagrant folder is in the root path. The scond command is to build the docker image for client, vnf and server. 
 
 	```bash
 	cd /vagrant
 	sudo bash ./build_docker_images.sh
 	```   
-### 4.1.2. Option2 : Install in Ubuntu
-1. First you need to install some basic components:
-    ```bash
-    # Docker
-    sudo apt-get install ca-certificates curl gnupg lsb-release
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    echo   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
-    sudo apt-get install docker-ce=5:20.10.16~3-0~ubuntu-focal docker-ce-cli=5:20.10.16~3-0~ubuntu-focal containerd.io docker-compose-plugin
-    sudo apt-get install containerd
 
-    # Ansible
-    sudo apt-get install ansible
-    pip3 install ansible
-    ```
-
-2.  Add docker into user group
-    ```bash
-    sudo groupadd docker
-    sudo gpasswd -a YOUR_USER_NAME docker
-    newgrp docker
-    sudo systemctl start docker
-    ```
-
-3. Install Comnetsemu
-   [Comnetsemu](https://git.comnets.net/public-repo/comnetsemu) is a virtual emulator/testbed designed for the book: Computing in Communication Networks: From Theory to Practice (2020)
-   ```bash
-   # PWD: /YOUR_PATH/yoho-emu
-   cd .. && git clone git clone https://git.comnets.net/public-repo/comnetsemu.git
-   cd comnetsemu/util
-   bash ./install.sh -a
-   cd .. || sudo make develop
-   ```
-
-4. Install docker image of Yoho
-   ```bash
-   # PWD: /YOUR_PATH/yoho-emu
-   sudo bash ./build_docker_images.sh
-   # (Optional) Check Docker image: yoho_dev
-   docker image ls
-   ```
-
-## 4.2. Run Yoho in the Emulator
+## 4.2. Run Yolo in the Emulator
 ### 4.2.1. Start Emulator
 Currently we provide a linear network topology, as shown below, each Switch has a corresponding VNF, the switch can forward the data to the VNF for calculation, when the VNF finishes computation, it will send data back to the client.
 
@@ -107,11 +60,9 @@ Currently we provide a linear network topology, as shown below, each Switch has 
 
 There are currently two ways to launch Emulator, as follows:
 ```bash
-# PWD: /YOUR_PATH/yoho-emu
+# PWD: /YOUR_PATH/yolo-emu
 # ----------------------- 
-# [client] -- [s0] -- [s1] -- [server]
-sudo python3 ./topo.py
-# [client] -- [s0] -- ...  -- [sn] -- [server]
+# [client] -- [s0] -- ...  -- [sn] -- [server] # as default: 3 VNFs
 sudo python3 ./topo_n_vnf.py
 ```
 If you run it successfully, you will enter the `>mininet` command and the script will automatically load the `xterm` shell of each node.
@@ -119,16 +70,20 @@ Run Script in each network node.
 
 In the topology, client, vnf and server are all docker containers loaded by comnetsemu. We just need to operate the different nodes in the corresponding shells.
 
-For our yoho-emu, the main tasks are driven by these three python3 scripts.
+For our yolo-emu, the main tasks are driven by these three python3 scripts.
 ```bash
     # on the server
-    python3 ./server_simple.py
+    python3 ./server.py
 
     # on the vnf
-    python3 ./vnf_simple.py
+    python3 ./vnf.py
 
     # on the client: origial mode
-    usage: client_simple.py [-h] [--epochs EPOCHS]
+    python3 ./client.py
+```
+To change the parameters of client, you can use the command line
+```bash
+    usage: client.py [-h] [--epochs EPOCHS]
                             [--test_id {0,1,2,3,4,5,6,7,8,9}] [--is_debug {0,1}]
                             [--chunk_gap CHUNK_GAP]
                             {split} ...
@@ -177,11 +132,11 @@ For our yoho-emu, the main tasks are driven by these three python3 scripts.
 ```
 The client's script provides the split subcommand, which corresponds to the spliter & combiner calculation, we will explain in the [Spliter & Combiner](#4512-spliter--combiner)
 
-### 4.2.2. Measurements
-All test data are in `/YOUR_PATH/yoho-emu/emulator_yoho/measurements`，each test case corresponds to a folder, currently we record all result use `w+` mode, if you want to clean all results:
+### 4.2.2. Measurements (TODO)
+All test data are in `/YOUR_PATH/yolo-emu/emulator_yolo/measurements`，each test case corresponds to a folder, currently we record all result use `w+` mode, if you want to clean all results:
 
 ```shell
-cd ./emulator_yoho
+cd ./emulator_yolo
 bash clean_measure.sh
 ```
 We record those data while running:
@@ -260,7 +215,7 @@ distance: [1.1185752153396606, 1.0729272365570068, 5.0812835693359375, 12.173698
 
 For specific data descriptions, please refer to [Network Detail](#43-network-detail)
 
-# 5. Network Detail
+# 5. Network Detail (TODO)
 ## 5.1. Calculation Mode
 For a computational task that can be split into 3 parts, we now have two main computational approaches, One is the [Original Mode](#4311-original-mode) which deploys 3 computational parts directly in the network, and the other is the [Spliter & Combiner Mode](#4312-spliter--combiner) which is optimized for computation.
 
@@ -449,12 +404,12 @@ We have prepared some files for this, you only need to make some simple changes 
 
 ```shell
 # ubuntu source
-/YOUR_PATH/yoho-emu/sources.list
+/YOUR_PATH/yolo-emu/sources.list
 
 # pip & pip3
-/YOUR_PATH/yoho-emu/pip.conf pip3.conf
+/YOUR_PATH/yolo-emu/pip.conf pip3.conf
 
-# Vagrantfile & Dockerfile.yoho_env
+# Vagrantfile & Dockerfile.yolo_env
 # edit file base on comment
 ```
 
@@ -467,13 +422,13 @@ We have prepared some files for this, you only need to make some simple changes 
     ```
 2. Copy output to Remote-SSH config file.
 
-3. Login in yoho in Remote SSH and Set XServer:
+3. Login in yolo in Remote SSH and Set XServer:
    
    - Download one XServer Application, we recommand `MobaXterm`, Remote-X11 extension may be also okay!
    - Next following step is base on `MobaXterm`.
    - In `MobaXterm` : change default path to your repo dictionary, in `Setting` --> `Configuration` --> `General` --> `Persisant Home Dictionary`
    - Restart `MobaXterm`
-   - In `MobaXterm` : click `start local termal` and run `vagrant ssh yoho` in the new shell, which should succcessfully run `vagrant up yoho` before.
+   - In `MobaXterm` : click `start local termal` and run `vagrant ssh yolo` in the new shell, which should succcessfully run `vagrant up yolo` before.
    - In `MobaXterm` : if successfully login, check the login header info to find the `Last Login` IP, like `10.0.2.2`
    - In `MobaXterm` : run `echo $DISPLAY`, check the offset number, default is `10:0`
    - In `MobaXterm` : run `export DISPLAY=10.0.2.2:10.0`, `10:0.2.2:10.0` is the ip and offset in last 2 steps, you can also add this command in `~/.bashrc` if you like :)

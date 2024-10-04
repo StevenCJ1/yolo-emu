@@ -6,7 +6,7 @@
 #  Variables  #
 ###############
 
-CPUS = 2
+CPUS = 4
 # - 2GB RAM SHOULD be sufficient for most examples and applications.
 # - Currently only YOLOv2 object detection application requires 4GB RAM to run smoothly.
 # - Reduce the memory number (in MB) here if you physical machine does not have enough physical memory.
@@ -15,7 +15,7 @@ RAM = 4096
 # Bento: Packer templates for building minimal Vagrant baseboxes
 # The bento/ubuntu-XX.XX is a small image of about 500 MB, fast to download
 BOX = "bento/ubuntu-20.04"
-VM_NAME = "ubuntu-20.04-yoho"
+VM_NAME = "ubuntu-20.04-yolo"
 
 # When using libvirt as the provider, use this box, bento boxes do not support libvirt.
 BOX_LIBVIRT = "generic/ubuntu2004"
@@ -105,14 +105,14 @@ Vagrant.configure("2") do |config|
     config.vbguest.auto_update = false
   end
 
-  config.vm.define "yoho" do |yoho|
-    yoho.vm.box = BOX
+  config.vm.define "yolo" do |yolo|
+    yolo.vm.box = BOX
     # Sync ./ to home directory of vagrant to simplify the install script
-    # yoho.vm.synced_folder ".", "/vagrant", disabled: true
-    # yoho.vm.synced_folder ".", "/home/vagrant/comnetsemu"
+    # yolo.vm.synced_folder ".", "/vagrant", disabled: true
+    # yolo.vm.synced_folder ".", "/home/vagrant/comnetsemu"
 
     # For Virtualbox provider
-    yoho.vm.provider "virtualbox" do |vb|
+    yolo.vm.provider "virtualbox" do |vb|
       vb.name = VM_NAME
       vb.cpus = CPUS
       vb.memory = RAM
@@ -122,7 +122,7 @@ Vagrant.configure("2") do |config|
     end
 
     # For libvirt provider
-    yoho.vm.provider "libvirt" do |libvirt, override|
+    yolo.vm.provider "libvirt" do |libvirt, override|
       # Overrides are used to modify default options that do not work for libvirt provider.
       override.vm.box = BOX_LIBVIRT
       # override.vm.synced_folder ".", "/home/vagrant/comnetsemu", type: "nfs", nfs_version: 4
@@ -132,12 +132,12 @@ Vagrant.configure("2") do |config|
       libvirt.memory = RAM
     end
 
-    yoho.vm.hostname = "yoho"
-    yoho.vm.box_check_update = true
-    yoho.vm.post_up_message = '
-The VM is up! Run "$ vagrant ssh yoho" to ssh into the running VM.
+    yolo.vm.hostname = "yolo"
+    yolo.vm.box_check_update = true
+    yolo.vm.post_up_message = '
+The VM is up! Run "$ vagrant ssh yolo" to ssh into the running VM.
 
-IMPORTANT! For all yoho users and developers:
+IMPORTANT! For all yolo users and developers:
 
 When a new version is released (https://git.comnets.net/public-repo/comnetsemu/-/tags),
 please run the upgrade process described [here](https://git.comnets.net/public-repo/comnetsemu#upgrade-comnetsemu-and-dependencies).
@@ -146,28 +146,28 @@ But the script will automatically check and perform the upgrade, and if you have
 it will not take much time.
     '
 
-    yoho.vm.provision :shell, inline: $bootstrap, privileged: true
-    yoho.vm.provision :shell, inline: $setup_x11_server, privileged: true
-    yoho.vm.provision :shell, inline: $setup_comnetsemu, privileged: false
-    yoho.vm.provision :shell, inline: $post_installation, privileged: true
+    yolo.vm.provision :shell, inline: $bootstrap, privileged: true
+    yolo.vm.provision :shell, inline: $setup_x11_server, privileged: true
+    yolo.vm.provision :shell, inline: $setup_comnetsemu, privileged: false
+    yolo.vm.provision :shell, inline: $post_installation, privileged: true
 
-    yoho.vm.provider "libvirt" do |libvirt, override|
+    yolo.vm.provider "libvirt" do |libvirt, override|
       override.vm.provision :shell, inline: $setup_libvirt_vm_always, privileged: true, run: "always"
     end
-    #yoho.vm.provision :shell, privileged:false, run: "always", path: "./util/echo_banner.sh"
+    #yolo.vm.provision :shell, privileged:false, run: "always", path: "./util/echo_banner.sh"
 
     # VM networking
-    yoho.vm.network "forwarded_port", guest: 8888, host: 8888, host_ip: "127.0.0.1"
-    yoho.vm.network "forwarded_port", guest: 8082, host: 8082
-    yoho.vm.network "forwarded_port", guest: 8083, host: 8083
-    yoho.vm.network "forwarded_port", guest: 8084, host: 8084
+    yolo.vm.network "forwarded_port", guest: 8888, host: 8888, host_ip: "127.0.0.1"
+    yolo.vm.network "forwarded_port", guest: 8082, host: 8082
+    yolo.vm.network "forwarded_port", guest: 8083, host: 8083
+    yolo.vm.network "forwarded_port", guest: 8084, host: 8084
 
     # - Uncomment the underlying line to add a private network to the VM.
     #   If VirtualBox is used as the hypervisor, this means adding or using (if already created) a host-only interface to the VM.
-    # yoho.vm.network "private_network", ip: "192.168.0.2"
+    # yolo.vm.network "private_network", ip: "192.168.0.2"
 
     # Enable X11 forwarding
-    yoho.ssh.forward_agent = true
-    yoho.ssh.forward_x11 = true
+    yolo.ssh.forward_agent = true
+    yolo.ssh.forward_x11 = true
   end
 end
